@@ -30,6 +30,7 @@ export class ChannelsController extends BaseController {
     try {
       let channelId = req.params.id;
       let channel = await channelsService.getOne(channelId);
+
       return res.send(channel);
     } catch (error) {
       next(error);
@@ -41,6 +42,10 @@ export class ChannelsController extends BaseController {
       let channelBody = req.body;
       channelBody.creatorId = req.userInfo.id;
       let channel = await channelsService.create(channelBody);
+
+      // Emit a socket event "s:creating:channel" to notify clients about the newly created channel
+      // Pass the 'channel' object as a parameter to the 'message' function of the 'socketProvider'
+      socketProvider.message("s:creating:channel", channel);
       return res.send(channel);
     } catch (error) {
       next(error);

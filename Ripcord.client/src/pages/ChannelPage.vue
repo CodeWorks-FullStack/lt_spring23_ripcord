@@ -50,18 +50,72 @@ import { useRoute, useRouter } from "vue-router";
 import { roomsService } from "../services/RoomsService";
 import { socketService } from "../services/SocketService"
 import { adsService } from "../services/AdsService";
+import { router } from "../router.js";
 
 export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
 
-    onMounted(() => {
-      getChannels()
-      getChannel()
-      getMessages()
-      getAds()
+
+    // The router.beforeEach() function is a navigation guard that is called before each route change.
+    router.beforeEach((to, from) => {
+      // Log the 'to' and 'from' routes for debugging purposes
+      logger.log('[TO]', to, "[FROM]", from)
+
+      // Check if the previous route is "Channel"
+      if (from.name == "Channel") {
+        // If the user is leaving a channel, call the leaveRoom() function to handle necessary actions
+        // The leaveRoom() function is responsible for managing any tasks related to leaving the room associated with the channel
+        // Pass the channel ID (from.params.id) as a parameter to the leaveRoom() function
+        leaveRoom(from.params.id)
+      }
     })
+
+    // The router.afterEach() function is a navigation guard that is called after each route change.
+    router.afterEach((to, from) => {
+      // Check if the current route is "Channel"
+      if (to.name == "Channel") {
+        // If the user has arrived at a channel, perform the following actions:
+
+        // Call the below functions to handle necessary actions for joining the room associated with the channel
+        joinRoom()
+        getChannels()
+        getChannel()
+        getMessages()
+        getAds()
+      }
+    })
+
+    function leaveRoom(roomId) {
+      try {
+        // Create a payload object with the roomId parameter
+        let payload = { roomId: roomId }
+
+        // Emit a socket event "c:leaving:room" with the payload
+        // This event notifies the server that the user is leaving the specified room
+        socketService.emit("c:leaving:room", payload)
+      } catch (error) {
+        logger.error('[ERROR]', error)
+        Pop.error(('[ERROR]'), error.message)
+      }
+    }
+
+    function joinRoom() {
+      try {
+        // Create a payload object with the roomId obtained from route.params.id
+        // This assumes that the route object is available and contains the necessary information
+        let payload = { roomId: route.params.id }
+
+        // Emit a socket event "c:joining:room" with the payload
+        // This event notifies the server that the user is joining the specified room
+        socketService.emit("c:joining:room", payload)
+      } catch (error) {
+        logger.error('[ERROR]', error)
+        Pop.error(('[ERROR]'), error.message)
+      }
+    }
+
 
     async function getChannels() {
       try {
