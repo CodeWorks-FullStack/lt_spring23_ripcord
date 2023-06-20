@@ -1,8 +1,13 @@
 import { dbContext } from "../db/DbContext";
 import { BadRequest, Forbidden } from "../utils/Errors";
 import {roomsService} from "../services/RoomsService"
+import { socketProvider } from "../SocketProvider.js";
 
 class ChannelsService{
+  messageMods(channelId) {
+    let mods = [...]
+    socketProvider.messageUser(mods, )
+  }
 
   async getAll() {
     let channels = await dbContext.Channels.find().populate("creator", 'name picture')
